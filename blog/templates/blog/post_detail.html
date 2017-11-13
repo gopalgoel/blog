@@ -29,7 +29,7 @@
         {% if user.is_authenticated or comment.approved_comment %}
         <div class = "comment">
             <div class = "date">{{comment.publish_date}}</div>
-            {% if not comment.approved_comment %}
+            {% if not comment.approved_comment and user.username == "admin" %}
                 <a class="btn btn-default" title="Remove Comment" href="{% url 'comment_remove' pk=comment.pk %}">
                     <span class="glyphicon glyphicon-remove "></span>
                 </a>
@@ -39,6 +39,9 @@
             {% endif %}
             <strong>{{comment.author}}</strong>
             <p>{{comment.text|linebreaks}}</p>
+            {% if not comment.approved_comment %}
+                <p class="date">*Comment not yet approved*</p>
+            {% endif %}
         </div>
         <hr>
         {% endif %}
