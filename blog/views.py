@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Post, Comment
+from .models import Post, Comment, Tag
 from django.utils import timezone
 from .forms import PostForm, CommentForm
 from django.shortcuts import redirect
@@ -10,10 +10,15 @@ def post_list(request):
     posts = Post.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
     return render(request, 'blog/post_list.html', {'posts': posts})
 
+def tag_post_list(request, tag):
+    tag_name = get_object_or_404(Tag, name=tag).name
+    posts = Post.objects.filter(tags__name=tag_name).order_by('-published_date')
+    return render(request, 'blog/post_list.html', {'posts': posts})
 
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    return render(request, 'blog/post_detail.html', {'post': post})
+    tags = post.tags.all()
+    return render(request, 'blog/post_detail.html', {'post': post, 'tags': tags})
 
 
 @login_required
