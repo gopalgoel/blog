@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Post, Comment
+from .models import Post, Comment, Tag
 from django.utils import timezone
 from .forms import PostForm, CommentForm
 from django.shortcuts import redirect
@@ -10,10 +10,15 @@ def post_list(request):
     posts = Post.objects.filter(published_date__lte=timezone.now()).order_by('-published_date')
     return render(request, 'blog/post_list.html', {'posts': posts})
 
+def tag_post_list(request, tag):
+    tag_name = get_object_or_404(Tag, name=tag).name
+    posts = Post.objects.filter(tags__name=tag_name).order_by('-published_date')
+    return render(request, 'blog/post_list.html', {'posts': posts})
 
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    return render(request, 'blog/post_detail.html', {'post': post})
+    tags = post.tags.all()
+    return render(request, 'blog/post_detail.html', {'post': post, 'tags': tags})
 
 
 @login_required
@@ -22,8 +27,18 @@ def post_new(request):
         form = PostForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
+            tag_names = request.POST['tag'].strip().split()
             post.author = request.user
             post.save()
+            post = get_object_or_404(Post, pk=post.pk)
+            for tag_name in tag_names:
+                tag_name = tag_name.strip()
+                tag = Tag.objects.filter(name=tag_name)
+                if not tag : 
+                    tag = Tag.objects.create(name=tag_name)
+                else: 
+                    tag = tag[0]
+                post.tags.add(tag)
             return redirect('post_detail', pk=post.pk)
     else:
         form = PostForm()
@@ -33,16 +48,26 @@ def post_new(request):
 @login_required
 def post_edit(request, pk):
     post = get_object_or_404(Post, pk=pk)
+    tags = post.tags.all()
     if request.method == "POST":
         form = PostForm(request.POST, instance=post)
         if form.is_valid():
             post = form.save(commit=False)
+            tag_names = request.POST['tag'].strip().split()
+            for tag_name in tag_names:
+                tag_name = tag_name.strip()
+                tag = Tag.objects.filter(name=tag_name)
+                if not tag : 
+                    tag = Tag.objects.create(name=tag_name)
+                else: 
+                    tag = tag[0]
+                post.tags.add(tag)
             post.author = request.user
             post.save()
             return redirect('post_detail', pk=post.pk)
     else:
         form = PostForm(instance=post)
-    return render(request, 'blog/post_edit.html', {'form': form})
+    return render(request, 'blog/post_edit.html', {'form': form, 'tags': tags})
 
 
 @login_required

@@ -9,6 +9,7 @@ class Post(models.Model):
             default=timezone.now)
     published_date = models.DateTimeField(
             blank=True, null=True)
+    tags = models.ManyToManyField('blog.Tag', related_name='posts')
 
     def publish(self):
         self.published_date = timezone.now()
@@ -33,3 +34,9 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.text
+
+class Tag(models.Model):
+    name = models.TextField()
+
+    def __str__(self):
+        return self.name
